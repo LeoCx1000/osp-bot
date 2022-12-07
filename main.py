@@ -92,7 +92,7 @@ class OSPBot(commands.Bot):
         traceback_string = traceback.format_exc()
         _log.error("Error in event %s", event_method)
         await self.wait_until_ready()
-        error_channel: discord.TextChannel = self.get_channel(880181130408636456)  # type: ignore
+        error_channel: discord.TextChannel = self.get_channel(860633218829778954)  # type: ignore
         to_send = (
             f"```yaml\nAn error occurred in an {event_method} event```"
             f"```py\n{traceback_string}\n```"
