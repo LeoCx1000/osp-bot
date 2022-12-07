@@ -75,6 +75,8 @@ class OSPBot(commands.Bot):
                     _log.error(f"An error occurred while loading '{filename}'")
                     traceback.print_exc()
 
+        await self.load_extension("jishaku")
+
     async def on_ready(self):
         if not self.started:
             self.started = True
