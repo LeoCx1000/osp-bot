@@ -2,9 +2,10 @@ import io
 import traceback
 import logging
 import helpers
-import  discord
+import discord
 from discord.ext import commands
-from discord.ext.commands import BucketType
+from commands import BucketType
+
 
 async def setup(bot):
     await bot.add_cog(Handler(bot))
@@ -12,44 +13,49 @@ async def setup(bot):
 
 class Handler(commands.Cog):
     """🆘 Handle them errors 👀"""
+
     def __init__(self, bot):
         self.bot = bot
         self.error_channel = 880181130408636456
 
-    @commands.Cog.listener('on_command_error')
+    @commands.Cog.listener("on_command_error")
     async def error_handler(self, ctx: commands.Context, error):
         error = getattr(error, "original", error)
-        ignored = (
-            commands.CommandNotFound,
-        )
+        ignored = (commands.CommandNotFound,)
         if isinstance(error, ignored):
             return
+        assert ctx.command is not None
 
-        if isinstance(error, discord.ext.commands.CheckAnyFailure):
+        if isinstance(error, commands.CheckAnyFailure):
             for e in error.errors:
                 if not isinstance(error, commands.NotOwner):
                     error = e
                     break
 
-        if isinstance(error, discord.ext.commands.BadUnionArgument):
+        if isinstance(error, commands.BadUnionArgument):
             if error.errors:
                 error = error.errors[0]
 
         embed = discord.Embed(color=0xD7342A)
-        embed.set_author(name='Missing permissions!',
-                         icon_url='https://i.imgur.com/OAmzSGF.png')
+        embed.set_author(
+            name="Missing permissions!", icon_url="https://i.imgur.com/OAmzSGF.png"
+        )
 
         if isinstance(error, commands.NotOwner):
-            return await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
+            return await ctx.send(
+                f"you must own `{ctx.me.display_name}` to use `{ctx.command}`"
+            )
 
         if isinstance(error, commands.TooManyArguments):
             return await ctx.send(f"Too many arguments passed to the command!")
 
         if isinstance(error, helpers.NotOSP):
-            await ctx.send("**This command is restricted to OSP!**\ndiscord.gg/tkuDSz6wsc")
+            await ctx.send(
+                "**This command is restricted to OSP!**\ndiscord.gg/tkuDSz6wsc"
+            )
             return
 
-        if isinstance(error, discord.ext.commands.MissingPermissions):
+        if isinstance(error, commands.MissingPermissions):
             text = f"You're missing the following permissions: \n**{', '.join(error.missing_permissions)}**"
             embed.description = text
             try:
@@ -62,7 +68,7 @@ class Handler(commands.Cog):
                 finally:
                     return
 
-        if isinstance(error, discord.ext.commands.BotMissingPermissions):
+        if isinstance(error, commands.BotMissingPermissions):
             text = f"I'm missing the following permissions: \n**{', '.join(error.missing_permissions)}**"
             try:
                 embed.description = text
@@ -72,26 +78,31 @@ class Handler(commands.Cog):
             finally:
                 return
 
-        elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
+        elif isinstance(error, commands.MissingRequiredArgument):
             missing = f"{str(error.param).split(':')[0]}"
             command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
-            separator = (' ' * (len(command.split(missing)[0]) - 1))
-            indicator = ('^' * (len(missing) + 2))
+            separator = " " * (len(command.split(missing)[0]) - 1)
+            indicator = "^" * (len(missing) + 2)
 
             logging.info(f"`{separator}`  `{indicator}`")
             logging.info(error.param)
 
             return await ctx.send(
-                f"```{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```")
+                f"```{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```"
+            )
 
         elif isinstance(error, commands.errors.PartialEmojiConversionFailure):
             return await ctx.send(f"`{error.argument}` is not a valid Custom Emoji")
 
         elif isinstance(error, commands.errors.CommandOnCooldown):
-            embed = discord.Embed(color=0xD7342A,
-                                  description=f'Please try again in {round(error.retry_after, 2)} seconds')
-            embed.set_author(name='Command is on cooldown!',
-                             icon_url='https://i.imgur.com/izRBtg9.png')
+            embed = discord.Embed(
+                color=0xD7342A,
+                description=f"Please try again in {round(error.retry_after, 2)} seconds",
+            )
+            embed.set_author(
+                name="Command is on cooldown!",
+                icon_url="https://i.imgur.com/izRBtg9.png",
+            )
 
             if error.type == BucketType.default:
                 per = ""
@@ -111,26 +122,32 @@ class Handler(commands.Cog):
                 per = ""
 
             embed.set_footer(
-                text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
+                text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}"
+            )
             return await ctx.send(embed=embed)
 
-        elif isinstance(error, discord.ext.commands.errors.MaxConcurrencyReached):
-            embed = discord.Embed(color=0xD7342A, description=f"Please try again once you are done running the command")
-            embed.set_author(name='Command is alrady running!', icon_url='https://i.imgur.com/izRBtg9.png')
+        elif isinstance(error, commands.errors.MaxConcurrencyReached):
+            embed = discord.Embed(
+                color=0xD7342A,
+                description=f"Please try again once you are done running the command",
+            )
+            embed.set_author(
+                name="Command is alrady running!",
+                icon_url="https://i.imgur.com/izRBtg9.png",
+            )
 
-            if error.per == BucketType.default:
-                per = ""
+            per = ""
             if error.per == BucketType.user:
                 per = "per user"
-            if error.per == BucketType.guild:
+            elif error.per == BucketType.guild:
                 per = "per server"
-            if error.per == BucketType.channel:
+            elif error.per == BucketType.channel:
                 per = "per channel"
-            if error.per == BucketType.member:
+            elif error.per == BucketType.member:
                 per = "per member"
-            if error.per == BucketType.category:
+            elif error.per == BucketType.category:
                 per = "per category"
-            if error.per == BucketType.role:
+            elif error.per == BucketType.role:
                 per = "per role"
 
             embed.set_footer(text=f"limit is {error.number} command(s) running {per}")
@@ -141,61 +158,78 @@ class Handler(commands.Cog):
 
         elif isinstance(error, commands.errors.UserNotFound):
             return await ctx.send(
-                f"I've searched far and wide, but `{error.argument}` doesn't seem to be a member discord user...")
+                f"I've searched far and wide, but `{error.argument}` doesn't seem to be a member discord user..."
+            )
 
         elif isinstance(error, commands.BadArgument):
-            return await ctx.send(error or "Bad argument given!")
+            return await ctx.send(str(error) or "Bad argument given!")
 
         elif isinstance(error, discord.HTTPException):
-            await ctx.send("Oh no! An unexpected HTTP error occurred while handling this command! 😔"
-                           "\nI've notified the developers about it. in the meantime, maybe try again?")
+            await ctx.send(
+                "Oh no! An unexpected HTTP error occurred while handling this command! 😔"
+                "\nI've notified the developers about it. in the meantime, maybe try again?"
+            )
 
         elif isinstance(error, discord.Forbidden):
-            await ctx.send("Oh no! It seems like I don't have permissions to perform that action!"
-                           "\nThis may be due to me missing permissions in a specific channel, server"
-                           "permissions, or an issue with role hierarchy. Try adjusting my permissions"
-                           "for this server. \n(Note that I can't edit the server owner)")
+            await ctx.send(
+                "Oh no! It seems like I don't have permissions to perform that action!"
+                "\nThis may be due to me missing permissions in a specific channel, server"
+                "permissions, or an issue with role hierarchy. Try adjusting my permissions"
+                "for this server. \n(Note that I can't edit the server owner)"
+            )
 
         error_channel = self.bot.get_channel(self.error_channel)
 
-        traceback_string = "".join(traceback.format_exception(
-            etype=None, value=error, tb=error.__traceback__))
+        traceback_string = "".join(
+            traceback.format_exception(etype=None, value=error, tb=error.__traceback__)
+        )
 
         await self.bot.wait_until_ready()
 
         if ctx.me.guild_permissions.administrator:
-            admin = '✅'
+            admin = "✅"
         else:
-            admin = '❌'
+            admin = "❌"
 
         if ctx.guild:
-            command_data = f"command: {ctx.message.content[0:1700]}" \
-                           f"\nguild_id: {ctx.guild.id}" \
-                           f"\nowner_id: {ctx.guild.owner.id}" \
-                           f"\nbot admin: {admin} " \
-                           f"- role pos: {ctx.me.top_role.position}"
+            command_data = (
+                f"command: {ctx.message.content[0:1700]}"
+                f"\nguild_id: {ctx.guild.id}"
+                f"\nowner_id: {ctx.guild.owner.id}"
+                f"\nbot admin: {admin} "
+                f"- role pos: {ctx.me.top_role.position}"
+            )
         else:
-            command_data = f"command: {ctx.message.content[0:1700]}" \
-                           f"\nCommand executed in DMs"
+            command_data = (
+                f"command: {ctx.message.content[0:1700]}" f"\nCommand executed in DMs"
+            )
 
-        to_send = f"```yaml\n{command_data}``````py\n{ctx.command} " \
-                  f"command raised an error:\n{traceback_string}\n```"
+        to_send = (
+            f"```yaml\n{command_data}``````py\n{ctx.command} "
+            f"command raised an error:\n{traceback_string}\n```"
+        )
         if len(to_send) < 2000:
             try:
                 sent_error = await error_channel.send(to_send)
 
             except (discord.Forbidden, discord.HTTPException):
-                sent_error = await error_channel.send(f"```yaml\n{command_data}``````py Command: {ctx.command}"
-                                                      f"Raised the following error:\n```",
-                                                      file=discord.File(io.StringIO(traceback_string),
-                                                                        filename='traceback.py'))
+                sent_error = await error_channel.send(
+                    f"```yaml\n{command_data}``````py Command: {ctx.command}"
+                    f"Raised the following error:\n```",
+                    file=discord.File(
+                        io.StringIO(traceback_string), filename="traceback.py"
+                    ),
+                )
         else:
-            sent_error = await error_channel.send(f"```yaml\n{command_data}``````py Command: {ctx.command}"
-                                                  f"Raised the following error:\n```",
-                                                  file=discord.File(io.StringIO(traceback_string),
-                                                                    filename='traceback.py'))
+            sent_error = await error_channel.send(
+                f"```yaml\n{command_data}``````py Command: {ctx.command}"
+                f"Raised the following error:\n```",
+                file=discord.File(
+                    io.StringIO(traceback_string), filename="traceback.py"
+                ),
+            )
         try:
-            await sent_error.add_reaction('🗑')
+            await sent_error.add_reaction("🗑")
         except (discord.HTTPException, discord.Forbidden):
             pass
         raise error
