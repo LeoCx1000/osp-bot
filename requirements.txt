@@ -1,0 +1,8 @@
+asyncpg
+asyncpg-stubs
+python-dotenv
+discord.py
+pyYAML
+jishaku
+discord-ext-menus
+git+https://github.com/oliver-ni/discord-ext-menus-views
